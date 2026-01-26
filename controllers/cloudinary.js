@@ -8,13 +8,15 @@ cloudinary.config({
 });
 
 const get_signature = async (req, res) => {
-  const { folder } = req.body || {};
+  const { folder, public_id } = req.body || {};
   const timestamp = Math.floor(Date.now() / 1000);
 
   const paramsToSign = {
     folder: String(folder || 'resources'),
     timestamp,
   };
+
+  if (public_id) paramsToSign.public_id = String(public_id);
 
   const signature = cloudinary.utils.api_sign_request(paramsToSign, process.env.CLOUD_API_SECRET);
 
@@ -24,6 +26,7 @@ const get_signature = async (req, res) => {
     timestamp,
     folder: paramsToSign.folder,
     signature,
+    public_id: paramsToSign.public_id || null,
   });
 };
 

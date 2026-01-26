@@ -1,40 +1,25 @@
 const { response } = require('express');
 const Asset = require('../models/asset');
 const Collection = require('../models/collection');
-const { deleteAsset, uploadAsset } = require('../middlewares/cloudinary');
-const fs = require('fs');
-
-const isVideoMime = (m) => typeof m === 'string' && m.toLowerCase().startsWith('video/');
-const isImageMime = (m) => typeof m === 'string' && m.toLowerCase().startsWith('image/');
+const { deleteAsset } = require('../middlewares/cloudinary');
 
 const create_asset = async (req, res = response) => {
   try {
     const data = req.body;
-    let fileInfo = {};
 
-    if (!req.files?.file) {
-      return res.status(400).json({ msg: 'Debe adjuntar un archivo.' });
+    if (!data?.collectionId) return res.status(400).json({ msg: 'collectionId requerido.' });
+    if (!data?.type) return res.status(400).json({ msg: 'type requerido.' });
+    if (!data?.file?.public_id || !data?.file?.secure_url) {
+      return res.status(400).json({ msg: 'file.public_id y file.secure_url requeridos.' });
     }
-
-    const file = req.files.file;
-    const mime = file.mimetype;
-
-    if (data.type === 'video') {
-      if (!isVideoMime(mime)) return res.status(400).json({ msg: 'Solo se permite video.' });
-    } else {
-      if (!isImageMime(mime)) return res.status(400).json({ msg: 'Solo se permite imagen.' });
-    }
-
-    const tempFilePath = file.tempFilePath;
-    const folder = `collections/${data.collectionId}/gallery`;
-    const resourceType = data.type === 'video' ? 'video' : 'image';
-
-    fileInfo = await uploadAsset(tempFilePath, folder, resourceType);
-    fs.unlinkSync(tempFilePath);
 
     const asset = new Asset({
-      ...data,
-      file: fileInfo,
+      collectionId: data.collectionId,
+      title: data.title ?? '',
+      file: data.file,
+      type: data.type,
+      status: typeof data.status === 'boolean' ? data.status : String(data.status) === 'true',
+      order: Number(data.order ?? 0),
     });
 
     const saved = await asset.save();
@@ -52,38 +37,26 @@ const update_asset = async (req, res = response) => {
     const asset = await Asset.findById(id);
     if (!asset) return res.status(404).json({ msg: 'Asset no encontrado.' });
 
-    if (data.file && typeof data.file === 'string') {
-      data.file = JSON.parse(data.file);
-    }
+    const nextType = String(data.type || asset.type || '');
+    const nextFile = data.file;
 
-    if (req.files?.file) {
-      const file = req.files.file;
-      const mime = file.mimetype;
-      const type = String(data.type || asset.type || '');
-
-      if (type === 'video') {
-        if (!isVideoMime(mime)) return res.status(400).json({ msg: 'Solo se permite video.' });
-      } else {
-        if (!isImageMime(mime)) return res.status(400).json({ msg: 'Solo se permite imagen.' });
-      }
-
-      if (asset.file?.public_id) {
+    if (nextFile?.public_id && nextFile?.secure_url) {
+      if (asset.file?.public_id && asset.file.public_id !== nextFile.public_id) {
         const oldResourceType = asset.file?.resource_type || (asset.type === 'video' ? 'video' : 'image');
         await deleteAsset(asset.file.public_id, oldResourceType);
       }
-
-      const tempFilePath = file.tempFilePath;
-      const folder = `collections/${data.collectionId || asset.collectionId}/gallery`;
-      const resourceType = type === 'video' ? 'video' : 'image';
-
-      const fileInfo = await uploadAsset(tempFilePath, folder, resourceType);
-      fs.unlinkSync(tempFilePath);
-
-      data.file = fileInfo;
-      data.type = type;
+      asset.file = nextFile;
     }
 
-    Object.assign(asset, data);
+    if (typeof data.collectionId !== 'undefined') asset.collectionId = data.collectionId;
+    if (typeof data.title !== 'undefined') asset.title = data.title;
+    if (nextType) asset.type = nextType;
+
+    if (typeof data.status !== 'undefined') {
+      asset.status = typeof data.status === 'boolean' ? data.status : String(data.status) === 'true';
+    }
+
+    if (typeof data.order !== 'undefined') asset.order = Number(data.order);
 
     const updated = await asset.save();
     return res.json(updated);

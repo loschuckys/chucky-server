@@ -84,23 +84,6 @@ const read_collections = async (req, res = response) => {
   }
 };
 
-  const getCollections = async (req, res = response) => {
-    try {
-      const collections = await Collection.find({ status: true }).sort({ order: 1 }).select('title subtitle slug banner');
-
-      const result = collections.map((item) => ({
-        title: item.title,
-        subtitle: item.subtitle,
-        slug: item.slug,
-        image: item.banner?.secure_url || null,
-      }));
-
-      return res.json(result);
-    } catch (err) {
-      return res.status(500).json({ msg: err?.message });
-    }
-  };
-
 const get_collection = async (req, res = response) => {
   try {
     const id = req.params.id;
@@ -164,6 +147,65 @@ const update_collections_order = async (req, res = response) => {
   }
 };
 
+const getCollections = async (req, res = response) => {
+  try {
+    const collections = await Collection.find({ status: true }).sort({ order: 1 }).select('title subtitle slug banner');
+
+    const result = collections.map((item) => ({
+      title: item.title,
+      subtitle: item.subtitle,
+      slug: item.slug,
+      image: item.banner?.secure_url || null,
+    }));
+
+    return res.json(result);
+  } catch (err) {
+    return res.status(500).json({ msg: err?.message });
+  }
+};
+
+const getResources = async (req, res = response) => {
+  try {
+    const { gallery } = req.query;
+
+    if (gallery) {
+      const collection = await Collection.findOne({ slug: gallery, status: true }).select('title subtitle banner');
+
+      if (!collection) {
+        return res.status(404).json({ msg: 'Galería no encontrada' });
+      }
+
+      const assets = await Asset.find({ collectionId: collection._id, status: true })
+        .sort({ order: 1, _id: 1 })
+        .select('title file type order');
+
+      return res.json({
+        title: collection.title,
+        description: collection.subtitle,
+        banner: collection.banner?.secure_url || null,
+        resources: assets.map((a) => ({
+          title: a.title || '',
+          type: a.type,
+          url: a.file?.secure_url || null,
+        })),
+      });
+    }
+
+    const collections = await Collection.find({ status: true }).sort({ order: 1 }).select('title subtitle slug banner');
+
+    return res.json(
+      collections.map((item) => ({
+        title: item.title,
+        subtitle: item.subtitle,
+        slug: item.slug,
+        image: item.banner?.secure_url || null,
+      })),
+    );
+  } catch (err) {
+    return res.status(500).json({ msg: err.message });
+  }
+};
+
 module.exports = {
   create_collection,
   get_collection,
@@ -172,4 +214,5 @@ module.exports = {
   delete_collection,
   update_collections_order,
   getCollections,
+  getResources,
 };

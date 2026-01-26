@@ -24,6 +24,7 @@ app.get('/', (req, res) => {
 });
 
 app.use('/api/cloudinary', require('./routes/cloudinary'));
+app.use('/api/resources', require('./routes/resources'));
 app.use('/api/collections', require('./routes/collections'));
 app.use('/api/assets', require('./routes/assets'));
 

@@ -147,23 +147,6 @@ const update_collections_order = async (req, res = response) => {
   }
 };
 
-const getCollections = async (req, res = response) => {
-  try {
-    const collections = await Collection.find({ status: true }).sort({ order: 1 }).select('title subtitle slug banner');
-
-    const result = collections.map((item) => ({
-      title: item.title,
-      subtitle: item.subtitle,
-      slug: item.slug,
-      image: item.banner?.secure_url || null,
-    }));
-
-    return res.json(result);
-  } catch (err) {
-    return res.status(500).json({ msg: err?.message });
-  }
-};
-
 const getResources = async (req, res = response) => {
   try {
     const { gallery } = req.query;
@@ -213,6 +196,5 @@ module.exports = {
   update_collection,
   delete_collection,
   update_collections_order,
-  getCollections,
   getResources,
 };

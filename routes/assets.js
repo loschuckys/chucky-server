@@ -11,6 +11,5 @@ router.get('/get_asset/:id', [], ctrl.get_asset);
 router.put('/update_asset', [tempUpload], ctrl.update_asset);
 router.delete('/delete_asset/:id', [], ctrl.delete_asset);
 router.put('/update_assets_order', [], ctrl.update_assets_order);
-router.get('/getGallery', ctrl.getGallery);
 
 module.exports = router;

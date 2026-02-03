@@ -5,6 +5,7 @@ const CollectionSchema = new Schema(
   {
     title: { type: String, required: true, trim: true },
     subtitle: { type: String, trim: true, default: '' },
+    link: { type: String, trim: true, default: '' },
     banner: { type: Object, default: {} },
     status: { type: Boolean, default: true },
     order: { type: Number, default: 0 },

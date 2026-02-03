@@ -15,7 +15,6 @@ const create_asset = async (req, res = response) => {
 
     const asset = new Asset({
       collectionId: data.collectionId,
-      title: data.title ?? '',
       file: data.file,
       type: data.type,
       status: typeof data.status === 'boolean' ? data.status : String(data.status) === 'true',
@@ -49,7 +48,6 @@ const update_asset = async (req, res = response) => {
     }
 
     if (typeof data.collectionId !== 'undefined') asset.collectionId = data.collectionId;
-    if (typeof data.title !== 'undefined') asset.title = data.title;
     if (nextType) asset.type = nextType;
 
     if (typeof data.status !== 'undefined') {
@@ -87,47 +85,6 @@ const get_asset = async (req, res = response) => {
     const asset = await Asset.findById(id);
     if (!asset) return res.status(404).json({ msg: 'Asset no encontrado.' });
     return res.json(asset);
-  } catch (err) {
-    return res.status(500).json({ msg: err?.message });
-  }
-};
-
-const getGallery = async (req, res = response) => {
-  try {
-    const { gallery } = req.query;
-
-    if (!gallery || typeof gallery !== 'string') {
-      return res.status(400).json({ msg: 'Slug requerido' });
-    }
-
-    const collection = await Collection.findOne({
-      slug: gallery,
-      status: true,
-    }).select('title subtitle banner');
-
-    if (!collection) {
-      return res.status(404).json({ msg: 'Galería no encontrada' });
-    }
-
-    const assets = await Asset.find({
-      collectionId: collection._id,
-      status: true,
-    })
-      .sort({ order: 1, _id: 1 })
-      .select('title file type order');
-
-    const result = {
-      title: collection.title,
-      description: collection.subtitle,
-      banner: collection.banner?.secure_url || null,
-      resources: assets.map((a) => ({
-        title: a.title || '',
-        type: a.type,
-        url: a.file?.secure_url || a.file?.url || null,
-      })),
-    };
-
-    return res.json(result);
   } catch (err) {
     return res.status(500).json({ msg: err?.message });
   }
@@ -179,5 +136,4 @@ module.exports = {
   update_asset,
   delete_asset,
   update_assets_order,
-  getGallery,
 };

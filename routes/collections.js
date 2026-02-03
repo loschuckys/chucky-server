@@ -11,6 +11,5 @@ router.get('/get_collection/:id', [], ctrl.get_collection);
 router.put('/update_collection', [tempUpload], ctrl.update_collection);
 router.delete('/delete_collection/:id', [], ctrl.delete_collection);
 router.put('/update_collections_order', [], ctrl.update_collections_order);
-router.get('/getCollections', ctrl.getCollections);
 
 module.exports = router;

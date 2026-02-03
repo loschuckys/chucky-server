@@ -33,6 +33,7 @@ app.use((req, res) => {
   if (req.accepts(['html', 'json']) === 'html') {
     return res.sendFile(path.resolve(process.cwd(), 'templates', '404.html'));
   }
+  
   return res.json({
     status: false,
     error: 'Not Found',
@@ -44,3 +45,4 @@ app.use((req, res) => {
 app.listen(port, () => {
   console.log('Servidor corriendo Puerto: ' + port);
 });
+

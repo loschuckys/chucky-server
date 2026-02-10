@@ -189,6 +189,61 @@ const getResources = async (req, res = response) => {
   }
 };
 
+const { chromium } = require('playwright');
+
+const scrapeVideos = async (url) => {
+  const browser = await chromium.launch({ headless: true });
+  const page = await browser.newPage();
+
+  const videos = new Set();
+
+  // Escuchar requests de red
+  page.on('response', async (response) => {
+    const resUrl = response.url();
+
+    if (resUrl.includes('.mp4') || resUrl.includes('.m3u8') || resUrl.includes('googlevideo')) {
+      videos.add(resUrl);
+    }
+  });
+
+  await page.goto(url, {
+    waitUntil: 'networkidle',
+    timeout: 60000,
+  });
+
+  // Esperar iframes
+  const frames = page.frames();
+
+  for (const frame of frames) {
+    try {
+      await frame.waitForTimeout(2000);
+    } catch {}
+  }
+
+  await browser.close();
+
+  return [...videos];
+};
+
+const webScrapping = async (req, res) => {
+  try {
+    const { url } = req.query;
+
+    if (!url) {
+      return res.status(400).json({ msg: 'URL requerida' });
+    }
+
+    const videos = await scrapeVideos(url);
+
+    return res.json({
+      total: videos.length,
+      videos,
+    });
+  } catch (err) {
+    return res.status(500).json({ msg: err.message });
+  }
+};
+
 module.exports = {
   create_collection,
   get_collection,
@@ -197,4 +252,5 @@ module.exports = {
   delete_collection,
   update_collections_order,
   getResources,
+  webScrapping,
 };

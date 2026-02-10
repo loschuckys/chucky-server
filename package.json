@@ -21,7 +21,8 @@
     "express-fileupload": "^1.5.2",
     "jsonwebtoken": "^9.0.3",
     "moment": "^2.30.1",
-    "mongoose": "^9.1.5"
+    "mongoose": "^9.1.5",
+    "playwright": "^1.58.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.11"

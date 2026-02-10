@@ -55,6 +55,7 @@ const update_asset = async (req, res = response) => {
     }
 
     if (typeof data.order !== 'undefined') asset.order = Number(data.order);
+    if (typeof data.link !== 'undefined') asset.link = data.link;
 
     const updated = await asset.save();
     return res.json(updated);
